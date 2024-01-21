@@ -7,7 +7,7 @@ from pybricks.tools import wait, StopWatch, DataLog
 from pybricks.robotics import DriveBase
 from pybricks.media.ev3dev import SoundFile, ImageFile
 
-SQUARE_SIZE = 21
+SQUARE_SIZE = 20.25
 
 # action types
 STRAIGHT = 1
@@ -22,24 +22,20 @@ motor_c = Motor(Port.C)
 def pid_turn(deg: int):
     kP = 5
     kI = 0.000
-    kD = 0.1
+    kD = 0.2
     integral = 0
     lastError = 0
 
-    # gyro is off by 1 degree every 90
-    if deg < 0:
-        deg += 1
-    else:
-        deg -= 1
-
     gyro.reset_angle(0)
-    while gyro.angle() - deg != 0:
-        error = deg - gyro.angle()
+    heading = gyro.angle()
+    target = heading + deg
+    while abs(target - gyro.angle()) != 0:
+        error = target - gyro.angle()
         integral += error
         derivative = error - lastError
         turn = kP * error + kI * integral + kD * derivative
-        motor_b.run(turn)
-        motor_c.run(-turn)
+        motor_b.run(-turn)
+        motor_c.run(turn)
     motor_b.brake()
     motor_c.brake()
 
@@ -49,18 +45,20 @@ def pid_straight(dist: float, speed: int):
     kD = 0
     integral = 0
     lastError = 0
+
     heading = gyro.angle()
+    
     in_per_rot = 10.21
     deg = (dist / in_per_rot) * 360
     motor_b.reset_angle(0)
     motor_c.reset_angle(0)
-    while (motor_b.angle() + motor_c.angle()) / 2 > -deg:
+    while (motor_b.angle() + motor_c.angle()) / 2 < deg:
         error = gyro.angle() - heading
         integral += error
         derivative = error - lastError
         turn = kP * error + kI * integral + kD * derivative
-        motor_b.run(-speed - turn)
-        motor_c.run(-speed + turn)
+        motor_b.run(speed + turn)
+        motor_c.run(speed - turn)
         lastError = error
     motor_b.brake()
     motor_c.brake()
@@ -89,30 +87,24 @@ def main():
     motor_c.brake()
     actions = [
             Action(STRAIGHT, SQUARE_SIZE),
+            Action(TURN, 90),
+            Action(STRAIGHT, SQUARE_SIZE),
+            Action(TURN, -90),
+            Action(STRAIGHT, SQUARE_SIZE*2),
+            Action(TURN, 180),
+            Action(STRAIGHT, SQUARE_SIZE*2),
+            Action(TURN, 90),
+            Action(STRAIGHT, SQUARE_SIZE*3),
+            Action(TURN, 90),
+            Action(STRAIGHT, SQUARE_SIZE*2),
+            Action(TURN, 180),
+            Action(STRAIGHT, SQUARE_SIZE),
             Action(TURN, -90),
             Action(STRAIGHT, SQUARE_SIZE),
             Action(TURN, -90),
             Action(STRAIGHT, SQUARE_SIZE),
             Action(TURN, 90),
-            Action(STRAIGHT, SQUARE_SIZE),
-            Action(TURN, -90),
-            Action(STRAIGHT, SQUARE_SIZE*2),
-            Action(TURN, -90),
-            Action(STRAIGHT, SQUARE_SIZE),
-            Action(TURN, 180),
-            Action(STRAIGHT, SQUARE_SIZE),
-            Action(TURN, 90),
-            Action(STRAIGHT, SQUARE_SIZE),
-            Action(TURN, -90),
-            Action(STRAIGHT, SQUARE_SIZE),
-            Action(TURN, 180),
-            Action(STRAIGHT, SQUARE_SIZE),
-            Action(TURN, -90),
-            Action(STRAIGHT, SQUARE_SIZE*2),
-            Action(TURN, -90),
-            Action(STRAIGHT, SQUARE_SIZE),
-            Action(TURN, -90),
-            Action(STRAIGHT, SQUARE_SIZE),
+            Action(STRAIGHT, SQUARE_SIZE*.75),
             ]
     evaluate_actions(actions)
 
