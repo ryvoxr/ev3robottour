@@ -1,0 +1,3 @@
+#!/bin/bash
+
+scp main.py robot@ev3dev.local:~/robottour/main.py
